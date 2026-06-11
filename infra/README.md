@@ -18,7 +18,7 @@ OPENROUTER_API_KEY=tu_api_key_aqui
 
 Luego levanta el contenedor local usando la configuración local:
 ```powershell
-docker compose -f infra/docker-compose.local.yml up -d
+docker compose --env-file .env -f infra/docker-compose.local.yml up -d
 ```
 
 ### 2. Acceder al servicio
@@ -30,15 +30,15 @@ Abre en tu navegador la dirección:
 ### 3. Ver logs y detener
 - Ver los logs del servicio local:
   ```powershell
-  docker compose -f infra/docker-compose.local.yml logs -f open-webui
+  docker compose --env-file .env -f infra/docker-compose.local.yml logs -f open-webui
   ```
 - Detener los contenedores locales (conservando datos):
   ```powershell
-  docker compose -f infra/docker-compose.local.yml down
+  docker compose --env-file .env -f infra/docker-compose.local.yml down
   ```
 - Detener y borrar datos del volumen (reinicio completo de base de datos):
   ```powershell
-  docker compose -f infra/docker-compose.local.yml down -v
+  docker compose --env-file .env -f infra/docker-compose.local.yml down -v
   ```
 
 ---
