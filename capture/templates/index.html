@@ -180,9 +180,6 @@
             <div class="col form-group">
                 <label>Proyecto (Carpeta)</label>
                 <select id="m-project">
-                    {% for folder in folders %}
-                    <option value="{{ folder }}">{{ folder }}</option>
-                    {% endfor %}
                 </select>
             </div>
             <div class="col form-group">
@@ -221,8 +218,26 @@
 </div>
 
 <script>
-    const token = "{{ token }}";
-    
+    // Leer el token directamente de la URL
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('t') || '';
+
+    // Cargar las carpetas disponibles desde el API
+    async function loadFolders() {
+        const res = await fetch(`/api/folders?t=${token}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const select = document.getElementById('m-project');
+        select.innerHTML = '';
+        data.folders.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            select.appendChild(opt);
+        });
+    }
+    loadFolders();
+
     const textInput = document.getElementById('text-input');
     const btnClassify = document.getElementById('btn-classify');
     const loading = document.getElementById('loading');
@@ -257,14 +272,12 @@
             if (!res.ok) throw new Error("Error en la clasificación");
             const data = await res.json();
 
-            // Rellenar formulario
             document.getElementById('m-title').value = data.title;
             document.getElementById('m-project').value = data.project;
             document.getElementById('m-type').value = data.type;
             document.getElementById('m-tags').value = data.tags.join(', ');
             document.getElementById('m-summary').value = data.summary;
-            
-            // Si parece una URL, ponerla en source
+
             if (text.startsWith('http://') || text.startsWith('https://')) {
                 document.getElementById('m-source').value = text.split(' ')[0];
             } else {
@@ -306,14 +319,13 @@
 
             if (!res.ok) throw new Error("Error guardando");
             const data = await res.json();
-            
-            showStatus(`Guardado en ${data.path}. Git status: ${data.git}`);
-            
-            // Reset
+
+            showStatus(`Guardado en ${data.path}. Git: ${data.git}`);
+
             editor.style.display = 'none';
             captureMode.style.display = 'block';
             textInput.value = "";
-            
+
         } catch (e) {
             showStatus(e.message, true);
         } finally {
@@ -324,7 +336,7 @@
 
     document.getElementById('btn-save').addEventListener('click', () => saveNote(false));
     document.getElementById('btn-save-inbox').addEventListener('click', () => saveNote(true));
-    
+
     document.getElementById('btn-cancel').addEventListener('click', () => {
         editor.style.display = 'none';
         captureMode.style.display = 'block';
