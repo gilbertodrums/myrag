@@ -1,0 +1,14 @@
+[project]
+name = "capture-app"
+version = "0.1.0"
+description = "App de captura rápida para MyRAG"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "requests",
+    "python-dotenv",
+    "jinja2",
+    "python-multipart"
+]

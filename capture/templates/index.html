@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyRAG Capture</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --surface-color: #252525;
+            --border-color: #3a3a3a;
+            --text-color: #dcddde;
+            --text-muted: #8b8b8b;
+            --accent-color: #7d5bc2; /* Obsidian-like purple accent */
+            --accent-hover: #906de6;
+            --danger-color: #e06c75;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #fff;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .btn {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #333;
+            border-color: #555;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(224, 108, 117, 0.1);
+        }
+
+        #editor {
+            display: none;
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #loading {
+            display: none;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success { background-color: rgba(40, 167, 69, 0.2); color: #4ade80; border: 1px solid rgba(40, 167, 69, 0.3); }
+        .error { background-color: rgba(220, 53, 69, 0.2); color: #f87171; border: 1px solid rgba(220, 53, 69, 0.3); }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Captura Nueva</h1>
+    
+    <div id="capture-mode">
+        <textarea id="text-input" placeholder="Pega texto, prompts, ideas o enlaces aquí..."></textarea>
+        <button id="btn-classify" class="btn btn-primary" style="width: 100%">Clasificar</button>
+        <div id="loading">Analizando texto...</div>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="editor">
+        <div class="form-group">
+            <label>Título</label>
+            <input type="text" id="m-title">
+        </div>
+        
+        <div class="row">
+            <div class="col form-group">
+                <label>Proyecto (Carpeta)</label>
+                <select id="m-project">
+                    {% for folder in folders %}
+                    <option value="{{ folder }}">{{ folder }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col form-group">
+                <label>Tipo</label>
+                <select id="m-type">
+                    <option value="prompt">Prompt</option>
+                    <option value="recurso">Recurso</option>
+                    <option value="snippet">Snippet</option>
+                    <option value="articulo">Artículo</option>
+                    <option value="nota">Nota</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Tags (separados por coma)</label>
+            <input type="text" id="m-tags" placeholder="ej. ideas, python, mcp">
+        </div>
+
+        <div class="form-group">
+            <label>Resumen</label>
+            <input type="text" id="m-summary">
+        </div>
+
+        <div class="form-group">
+            <label>Fuente (URL o "manual")</label>
+            <input type="text" id="m-source" value="manual">
+        </div>
+
+        <div class="actions">
+            <button id="btn-save" class="btn btn-primary">Guardar</button>
+            <button id="btn-save-inbox" class="btn">Mandar a Inbox</button>
+            <button id="btn-cancel" class="btn btn-danger">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = "{{ token }}";
+    
+    const textInput = document.getElementById('text-input');
+    const btnClassify = document.getElementById('btn-classify');
+    const loading = document.getElementById('loading');
+    const captureMode = document.getElementById('capture-mode');
+    const editor = document.getElementById('editor');
+    const statusDiv = document.getElementById('status');
+
+    let currentText = "";
+
+    function showStatus(msg, isError=false) {
+        statusDiv.textContent = msg;
+        statusDiv.style.display = 'block';
+        statusDiv.className = isError ? 'error' : 'success';
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+    }
+
+    btnClassify.addEventListener('click', async () => {
+        const text = textInput.value.trim();
+        if (!text) return;
+
+        currentText = text;
+        btnClassify.disabled = true;
+        loading.style.display = 'block';
+
+        try {
+            const res = await fetch(`/capture?token=${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+
+            if (!res.ok) throw new Error("Error en la clasificación");
+            const data = await res.json();
+
+            // Rellenar formulario
+            document.getElementById('m-title').value = data.title;
+            document.getElementById('m-project').value = data.project;
+            document.getElementById('m-type').value = data.type;
+            document.getElementById('m-tags').value = data.tags.join(', ');
+            document.getElementById('m-summary').value = data.summary;
+            
+            // Si parece una URL, ponerla en source
+            if (text.startsWith('http://') || text.startsWith('https://')) {
+                document.getElementById('m-source').value = text.split(' ')[0];
+            } else {
+                document.getElementById('m-source').value = "manual";
+            }
+
+            captureMode.style.display = 'none';
+            editor.style.display = 'block';
+
+        } catch (e) {
+            showStatus(e.message, true);
+        } finally {
+            btnClassify.disabled = false;
+            loading.style.display = 'none';
+        }
+    });
+
+    async function saveNote(forceInbox = false) {
+        const payload = {
+            title: document.getElementById('m-title').value,
+            project: forceInbox ? 'inbox' : document.getElementById('m-project').value,
+            type: document.getElementById('m-type').value,
+            tags: document.getElementById('m-tags').value.split(',').map(t => t.trim()).filter(t => t),
+            summary: document.getElementById('m-summary').value,
+            source: document.getElementById('m-source').value,
+            content: currentText
+        };
+
+        const btn = document.getElementById(forceInbox ? 'btn-save-inbox' : 'btn-save');
+        btn.disabled = true;
+        btn.textContent = "Guardando...";
+
+        try {
+            const res = await fetch(`/save?token=${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error("Error guardando");
+            const data = await res.json();
+            
+            showStatus(`Guardado en ${data.path}. Git status: ${data.git}`);
+            
+            // Reset
+            editor.style.display = 'none';
+            captureMode.style.display = 'block';
+            textInput.value = "";
+            
+        } catch (e) {
+            showStatus(e.message, true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = forceInbox ? "Mandar a Inbox" : "Guardar";
+        }
+    }
+
+    document.getElementById('btn-save').addEventListener('click', () => saveNote(false));
+    document.getElementById('btn-save-inbox').addEventListener('click', () => saveNote(true));
+    
+    document.getElementById('btn-cancel').addEventListener('click', () => {
+        editor.style.display = 'none';
+        captureMode.style.display = 'block';
+    });
+
+</script>
+
+</body>
+</html>
