@@ -1,0 +1,16 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-local
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui-local-data:/app/backend/data
+    environment:
+      - OPENAI_API_BASE_URL=https://openrouter.ai/api/v1
+      - OPENAI_API_KEY=${OPENROUTER_API_KEY}
+      - WEBUI_SECRET_KEY=super-secret-key-change-me-local
+    restart: unless-stopped
+
+volumes:
+  open-webui-local-data:

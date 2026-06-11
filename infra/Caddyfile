@@ -1,0 +1,8 @@
+{
+    email your-email@example.com
+}
+
+# Reemplaza chat.tudominio.com por tu dominio o subdominio apuntando al VPS
+chat.tudominio.com {
+    reverse_proxy open-webui:8080
+}
