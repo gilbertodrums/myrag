@@ -8,6 +8,7 @@ dependencies = [
     "pyyaml",
     "python-dotenv",
     "pytest",
+    "watchdog",
 ]
 
 

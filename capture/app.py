@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import datetime
 import subprocess
 from pathlib import Path
@@ -9,6 +10,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+
+# Añadir el directorio sync al path para poder importar sync.py
+sys.path.insert(0, str(Path(__file__).parent.parent / "sync"))
+import sync as syncer
 
 from classifier import classify_text, get_available_folders
 
@@ -106,7 +111,17 @@ summary: "{req.summary.replace('"', "'")}"
         )
         subprocess.run(["git", "push", "origin", "main"], cwd=WORKSPACE_ROOT, check=True)
         git_status = "ok"
+        # Sincronizar con Open WebUI en background automáticamente
+        import threading
+        threading.Thread(target=syncer.main, daemon=True).start()
     except subprocess.CalledProcessError as e:
         git_status = f"error: {e}"
 
     return {"status": "ok", "path": f"vault/{folder}/{filepath.name}", "git": git_status}
+
+
+async def run_sync_background():
+    """Corre el sync en un hilo separado para no bloquear la respuesta."""
+    import threading
+    t = threading.Thread(target=syncer.main, daemon=True)
+    t.start()
