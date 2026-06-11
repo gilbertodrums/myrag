@@ -1,0 +1,9 @@
+knowledge_bases:
+  - name: "Prompts"
+    paths: ["vault/prompts/"]
+  - name: "MCP y Skills"
+    paths: ["vault/mcp/", "vault/skills/"]
+  - name: "Recursos IA"
+    paths: ["vault/recursos/"]
+  - name: "Todo"
+    paths: ["vault/"]

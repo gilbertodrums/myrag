@@ -1,0 +1,13 @@
+[project]
+name = "myrag-sync"
+version = "0.1.0"
+description = "Sincronizador de Markdown a Open WebUI Knowledge Bases"
+requires-python = ">=3.11"
+dependencies = [
+    "requests",
+    "pyyaml",
+    "python-dotenv",
+    "pytest",
+]
+
+
